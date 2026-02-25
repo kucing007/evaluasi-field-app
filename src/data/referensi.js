@@ -274,7 +274,6 @@ export const INDIKATOR_CONFIG = [
         options: [
             { nilai: 'Baik', skor: 10 },
             { nilai: 'Rusak Ringan', skor: 7 },
-            { nilai: 'Rusak Sedang', skor: 4 },
             { nilai: 'Rusak Berat', skor: 1 },
         ],
     },
