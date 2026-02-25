@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-surface: #1e293b;
-  --color-surface-2: #334155;
-  --color-surface-3: #475569;
-  --color-bg: #0f172a;
+  --color-primary: #14b8a6;
+  --color-primary-dark: #0f766e;
+  --color-primary-light: #2dd4bf;
+  --color-surface: #0d2137;
+  --color-surface-2: #132d47;
+  --color-surface-3: #1a3a5c;
+  --color-bg: #060f1d;
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
-  --color-text: #f1f5f9;
-  --color-text-dim: #94a3b8;
+  --color-text: #e2e8f0;
+  --color-text-dim: #7e9ab8;
+  --color-accent: #14b8a6;
+  --color-accent-glow: rgba(20, 184, 166, 0.25);
 }
 
 @layer base {
@@ -27,23 +30,25 @@
     overflow-x: hidden;
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     color-scheme: dark;
   }
 }
 
 @layer components {
   .glass-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.6));
+    background: linear-gradient(135deg, rgba(13, 33, 55, 0.85), rgba(19, 45, 71, 0.65));
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(126, 154, 184, 0.1);
     border-radius: 16px;
     transition: all 0.2s ease;
   }
 
   .glass-card:hover {
-    border-color: rgba(59, 130, 246, 0.3);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.08);
+    border-color: rgba(20, 184, 166, 0.25);
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.06);
   }
 
   .glass-card:active {
@@ -57,11 +62,11 @@
     padding: 12px 24px;
     font-weight: 600;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
   }
 
   .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
     transform: translateY(-1px);
   }
 
@@ -69,10 +74,16 @@
     transform: translateY(0);
   }
 
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
   .btn-secondary {
     background: var(--color-surface-2);
     color: var(--color-text);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(126, 154, 184, 0.2);
     border-radius: 12px;
     padding: 12px 24px;
     font-weight: 500;
@@ -86,18 +97,47 @@
   .input-field {
     width: 100%;
     background: var(--color-surface);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(126, 154, 184, 0.2);
     border-radius: 10px;
     padding: 12px 16px;
     font-size: 16px;
     color: var(--color-text);
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     outline: none;
   }
 
   .input-field:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+  }
+
+  /* Option buttons — unselected */
+  .option-btn {
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--color-bg);
+    color: var(--color-text-dim);
+    border: 1.5px solid transparent;
+  }
+
+  .option-btn:hover {
+    background: var(--color-surface-2);
+    border-color: rgba(126, 154, 184, 0.15);
+  }
+
+  /* Option buttons — selected */
+  .option-btn.selected {
+    background: rgba(20, 184, 166, 0.12);
+    color: var(--color-primary-light);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 12px rgba(20, 184, 166, 0.15);
   }
 
   .status-badge {
@@ -113,8 +153,8 @@
   }
 
   .status-empty {
-    background: rgba(148, 163, 184, 0.15);
-    color: #94a3b8;
+    background: rgba(126, 154, 184, 0.15);
+    color: #7e9ab8;
   }
 
   .status-partial {
@@ -145,7 +185,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.4);
     z-index: 40;
   }
 
@@ -169,6 +209,13 @@
     border-radius: 2px;
   }
 
+  /* Section divider between indikator groups */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.2), transparent);
+    margin: 8px 0;
+  }
+
   .progress-bar {
     height: 6px;
     background: var(--color-surface-2);
@@ -180,5 +227,39 @@
     height: 100%;
     border-radius: 3px;
     transition: width 0.4s ease;
+  }
+
+  /* Textarea for catatan */
+  .textarea-field {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid rgba(126, 154, 184, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--color-text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .textarea-field:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+  }
+
+  /* Info chip for luas/kondisi */
+  .info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--color-primary-light);
+    border: 1px solid rgba(20, 184, 166, 0.15);
   }
 }

@@ -3,9 +3,7 @@ import { INDIKATOR_CONFIG } from '../data/referensi';
 
 /**
  * Export evaluasi data to .xlsx matching Nadine's evaluasi_template format.
- *
- * @param {Array} rows - [{ kd_brg, no_aset, cara_evaluasi, tgl_survey, ind_111111, ... }]
- * @param {string} filename - Output filename
+ * All 21 indikators are exported (including hidden ones), as-is if empty.
  */
 export function exportToExcel(rows, filename = 'evaluasi_data.xlsx') {
     const headers = [
@@ -45,9 +43,29 @@ export function exportToExcel(rows, filename = 'evaluasi_data.xlsx') {
 }
 
 /**
+ * Generate a blank import template .xlsx with header row.
+ */
+export function generateImportTemplate() {
+    const headers = ['kd_brg', 'no_aset', 'ur_sskel', 'luas', 'kondisi_barang'];
+    const exampleRow = ['3050201001', '1', 'Gedung Kantor', '500', 'Baik'];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
+
+    ws['!cols'] = [
+        { wch: 14 },
+        { wch: 8 },
+        { wch: 30 },
+        { wch: 10 },
+        { wch: 16 },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Daftar Aset');
+    XLSX.writeFile(wb, 'template_import_aset.xlsx');
+}
+
+/**
  * Parse an imported JSON file containing a list of asets.
- * Expected format: [{ kd_brg, no_aset, ur_sskel }]
- * or { data: [{ kd_brg, no_aset, ur_sskel }] }
  */
 export function parseImportJSON(jsonString) {
     try {
@@ -57,6 +75,8 @@ export function parseImportJSON(jsonString) {
             kd_brg: String(row.kd_brg || '').trim(),
             no_aset: String(row.no_aset || row.nup || '').trim(),
             ur_sskel: String(row.ur_sskel || row.uraian || row.nama || '').trim(),
+            luas: String(row.luas || '').trim(),
+            kondisi_barang: String(row.kondisi_barang || row.kondisi || '').trim(),
         }));
     } catch {
         return [];
@@ -82,6 +102,8 @@ export function parseImportCSV(csvString) {
             kd_brg: String(row.kd_brg || row['kode_barang'] || '').trim(),
             no_aset: String(row.no_aset || row.nup || '').trim(),
             ur_sskel: String(row.ur_sskel || row.uraian || row.nama || '').trim(),
+            luas: String(row.luas || '').trim(),
+            kondisi_barang: String(row.kondisi_barang || row.kondisi || '').trim(),
         };
     });
 }
@@ -98,6 +120,8 @@ export function parseImportExcel(arrayBuffer) {
             kd_brg: String(row.kd_brg || row['Kode Barang'] || row['kd barang'] || '').trim(),
             no_aset: String(row.no_aset || row.NUP || row.nup || '').trim(),
             ur_sskel: String(row.ur_sskel || row.uraian || row.Uraian || row.nama || '').trim(),
+            luas: String(row.luas || row.Luas || '').trim(),
+            kondisi_barang: String(row.kondisi_barang || row.kondisi || row.Kondisi || row['Kondisi Barang'] || '').trim(),
         }));
     } catch {
         return [];

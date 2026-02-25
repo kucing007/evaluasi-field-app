@@ -10,7 +10,6 @@ import {
     CheckCircle2,
     Clock,
     Circle,
-    Filter,
 } from 'lucide-react';
 
 export default function AsetListPage() {
@@ -72,7 +71,7 @@ export default function AsetListPage() {
                 {/* Stats strip */}
                 <div className="flex gap-2 mb-3">
                     {[
-                        { label: 'Total', val: total, style: 'bg-blue-500/15 text-blue-400' },
+                        { label: 'Total', val: total, style: 'bg-teal-500/15 text-teal-400' },
                         { label: 'Selesai', val: done, style: 'bg-emerald-500/15 text-emerald-400' },
                         { label: 'Sebagian', val: partial, style: 'bg-amber-500/15 text-amber-400' },
                         { label: 'Belum', val: empty, style: 'bg-white/5 text-[--color-text-dim]' },
@@ -107,7 +106,7 @@ export default function AsetListPage() {
                             key={f.key}
                             onClick={() => setFilterStatus(f.key)}
                             className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filterStatus === f.key
-                                    ? 'bg-blue-500/20 text-blue-400 font-medium'
+                                    ? 'bg-teal-500/20 text-teal-400 font-medium'
                                     : 'bg-white/5 text-[--color-text-dim]'
                                 }`}
                         >
@@ -119,7 +118,7 @@ export default function AsetListPage() {
 
             {/* Aset List */}
             <div className="px-5 space-y-2">
-                {filtered.map((a, i) => (
+                {filtered.map((a) => (
                     <div
                         key={a.id}
                         className="glass-card px-4 py-3 flex items-center gap-3 cursor-pointer"
@@ -128,10 +127,16 @@ export default function AsetListPage() {
                         {statusIcon(a.status)}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-mono text-blue-400">{a.kd_brg}</span>
+                                <span className="text-xs font-mono text-teal-400">{a.kd_brg}</span>
                                 <span className="text-xs text-[--color-text-dim]">NUP {a.no_aset}</span>
                             </div>
                             <p className="text-sm truncate mt-0.5">{a.ur_sskel || '-'}</p>
+                            {(a.luas || a.kondisi_barang) && (
+                                <div className="flex gap-2 mt-1">
+                                    {a.luas && <span className="info-chip">Luas: {a.luas}</span>}
+                                    {a.kondisi_barang && <span className="info-chip">{a.kondisi_barang}</span>}
+                                </div>
+                            )}
                         </div>
                         <ChevronRight size={16} className="text-[--color-text-dim] flex-shrink-0" />
                     </div>

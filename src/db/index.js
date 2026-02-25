@@ -2,17 +2,23 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('EvaluasiBMNDB');
 
+db.version(2).stores({
+    pakets: '++id, no_paket, tahun',
+    asets: '++id, paket_id, kd_brg, no_aset, status, [kd_brg+no_aset]',
+    evaluasis: '++id, &aset_id',
+});
+
+// Delete old v1 data if upgrading
 db.version(1).stores({
     pakets: '++id, no_paket, tahun',
     asets: '++id, paket_id, kd_brg, no_aset, status, [kd_brg+no_aset]',
     evaluasis: '++id, &aset_id',
 });
 
-
 /**
  * Import daftar aset into a paket.
  * @param {Object} paketInfo - { no_paket, ur_satker, tahun }
- * @param {Array} asetRows - [{ kd_brg, no_aset, ur_sskel, ... }]
+ * @param {Array} asetRows - [{ kd_brg, no_aset, ur_sskel, luas, kondisi_barang }]
  * @returns {number} paket_id
  */
 export async function importAsetList(paketInfo, asetRows) {
@@ -29,6 +35,8 @@ export async function importAsetList(paketInfo, asetRows) {
         kd_brg: String(row.kd_brg || '').trim(),
         no_aset: String(row.no_aset || '').trim(),
         ur_sskel: String(row.ur_sskel || row.uraian || '').trim(),
+        luas: String(row.luas || '').trim(),
+        kondisi_barang: String(row.kondisi_barang || row.kondisi || '').trim(),
         status: 'empty', // empty | partial | done
     }));
 
@@ -46,7 +54,8 @@ export async function getOrCreateEvaluasi(aset_id) {
             aset_id,
             cara_evaluasi: '',
             tgl_survey: '',
-            // Indikator fields
+            catatan: '',
+            // Indikator fields (all 21)
             ind_111111: '',
             ind_121111: '', ind_121211: '', ind_121311: '', ind_121411: '', ind_121511: '',
             ind_131111: '', ind_131211: '', ind_131311: '', ind_131411: '',
@@ -73,21 +82,24 @@ export async function updateEvaluasi(id, fields) {
 
 /**
  * Update aset status based on evaluasi completeness.
+ * Only counts visible (non-hidden) indikators.
  */
 export async function updateAsetStatus(aset_id) {
+    const { VISIBLE_INDIKATORS } = await import('../data/referensi');
+
     const evaluasi = await db.evaluasis.where('aset_id').equals(aset_id).first();
     if (!evaluasi) {
         await db.asets.update(aset_id, { status: 'empty' });
         return 'empty';
     }
 
-    const indFields = Object.keys(evaluasi).filter((k) => k.startsWith('ind_'));
-    const filled = indFields.filter((k) => evaluasi[k] !== '' && evaluasi[k] != null).length;
+    const visibleKeys = VISIBLE_INDIKATORS.map((i) => `ind_${i.kd_sub_sub}`);
+    const filled = visibleKeys.filter((k) => evaluasi[k] !== '' && evaluasi[k] != null).length;
     const hasCaraOrTgl = evaluasi.cara_evaluasi || evaluasi.tgl_survey;
 
     let status = 'empty';
     if (filled > 0 || hasCaraOrTgl) status = 'partial';
-    if (filled >= indFields.length && evaluasi.cara_evaluasi && evaluasi.tgl_survey) status = 'done';
+    if (filled >= visibleKeys.length && evaluasi.cara_evaluasi && evaluasi.tgl_survey) status = 'done';
 
     await db.asets.update(aset_id, { status });
     return status;

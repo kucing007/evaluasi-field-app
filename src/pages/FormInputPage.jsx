@@ -5,6 +5,7 @@ import { db, getOrCreateEvaluasi, updateEvaluasi, updateAsetStatus } from '../db
 import {
     INDIKATOR_CONFIG,
     getGroupedIndikators,
+    VISIBLE_INDIKATORS,
     CARA_EVALUASI_OPTIONS,
 } from '../data/referensi';
 import {
@@ -17,6 +18,7 @@ import {
     ListChecks,
     Calendar,
     ClipboardCheck,
+    MessageSquare,
 } from 'lucide-react';
 
 export default function FormInputPage() {
@@ -38,11 +40,12 @@ export default function FormInputPage() {
             setForm({
                 cara_evaluasi: ev.cara_evaluasi || '',
                 tgl_survey: ev.tgl_survey || '',
+                catatan: ev.catatan || '',
                 ...Object.fromEntries(
                     INDIKATOR_CONFIG.map((ind) => [`ind_${ind.kd_sub_sub}`, ev[`ind_${ind.kd_sub_sub}`] || ''])
                 ),
             });
-            // Expand first group by default
+            // Expand first visible group by default
             const groups = Object.keys(getGroupedIndikators());
             if (groups.length > 0) setExpandedGroup(groups[0]);
         });
@@ -84,12 +87,15 @@ export default function FormInputPage() {
 
     if (!aset || !evaluasi) return null;
 
+    // Only visible groups
     const groups = getGroupedIndikators();
-    const totalFields = INDIKATOR_CONFIG.length + 2; // +cara +tgl
+
+    // Progress based on visible indicators only
+    const totalFields = VISIBLE_INDIKATORS.length + 2; // +cara +tgl
     const filledFields =
         (form.cara_evaluasi ? 1 : 0) +
         (form.tgl_survey ? 1 : 0) +
-        INDIKATOR_CONFIG.filter((ind) => {
+        VISIBLE_INDIKATORS.filter((ind) => {
             const v = form[`ind_${ind.kd_sub_sub}`];
             return v !== '' && v != null;
         }).length;
@@ -105,14 +111,20 @@ export default function FormInputPage() {
                     </button>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-blue-400">{aset.kd_brg}</span>
+                            <span className="text-xs font-mono text-teal-400">{aset.kd_brg}</span>
                             <span className="text-xs text-[--color-text-dim]">NUP {aset.no_aset}</span>
                         </div>
                         <h1 className="text-sm font-semibold truncate">{aset.ur_sskel || 'Aset'}</h1>
+                        {(aset.luas || aset.kondisi_barang) && (
+                            <div className="flex gap-2 mt-1">
+                                {aset.luas && <span className="info-chip">Luas: {aset.luas}</span>}
+                                {aset.kondisi_barang && <span className="info-chip">{aset.kondisi_barang}</span>}
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={handleSaveNow}
-                        className="p-2 rounded-xl bg-blue-500/10 text-blue-400"
+                        className="p-2 rounded-xl bg-teal-500/10 text-teal-400"
                         title="Simpan"
                     >
                         <Save size={18} />
@@ -130,7 +142,7 @@ export default function FormInputPage() {
                                     background:
                                         progress === 100
                                             ? 'linear-gradient(90deg, #22c55e, #10b981)'
-                                            : 'linear-gradient(90deg, #3b82f6, #6366f1)',
+                                            : 'linear-gradient(90deg, #14b8a6, #0d9488)',
                                 }}
                             />
                         </div>
@@ -164,10 +176,7 @@ export default function FormInputPage() {
                                 <button
                                     key={opt}
                                     onClick={() => handleChange('cara_evaluasi', opt)}
-                                    className={`py-3 px-3 rounded-xl text-sm font-medium transition-all ${form.cara_evaluasi === opt
-                                            ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/40'
-                                            : 'bg-[--color-surface-2] text-[--color-text-dim]'
-                                        }`}
+                                    className={`option-btn justify-center ${form.cara_evaluasi === opt ? 'selected' : ''}`}
                                 >
                                     {opt}
                                 </button>
@@ -190,8 +199,8 @@ export default function FormInputPage() {
                     </div>
                 </div>
 
-                {/* Indikator Groups */}
-                {Object.entries(groups).map(([groupName, indicators]) => {
+                {/* Indikator Groups (visible only) */}
+                {Object.entries(groups).map(([groupName, indicators], groupIdx) => {
                     const isExpanded = expandedGroup === groupName;
                     const groupFilled = indicators.filter((ind) => {
                         const v = form[`ind_${ind.kd_sub_sub}`];
@@ -199,57 +208,77 @@ export default function FormInputPage() {
                     }).length;
 
                     return (
-                        <div key={groupName} className="glass-card overflow-hidden">
-                            {/* Group Header */}
-                            <button
-                                onClick={() => setExpandedGroup(isExpanded ? null : groupName)}
-                                className="w-full p-4 flex items-center justify-between"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${groupFilled === indicators.length
-                                                ? 'bg-emerald-500/20'
-                                                : 'bg-blue-500/10'
-                                            }`}
-                                    >
-                                        {groupFilled === indicators.length ? (
-                                            <CheckCircle2 size={16} className="text-emerald-400" />
-                                        ) : indicators[0].type === 'pilihan' ? (
-                                            <ListChecks size={16} className="text-blue-400" />
-                                        ) : (
-                                            <Hash size={16} className="text-blue-400" />
-                                        )}
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-medium">{groupName}</p>
-                                        <p className="text-[10px] text-[--color-text-dim]">
-                                            {groupFilled}/{indicators.length} terisi
-                                        </p>
-                                    </div>
-                                </div>
-                                {isExpanded ? (
-                                    <ChevronUp size={18} className="text-[--color-text-dim]" />
-                                ) : (
-                                    <ChevronDown size={18} className="text-[--color-text-dim]" />
-                                )}
-                            </button>
+                        <div key={groupName}>
+                            {/* Section divider between groups */}
+                            {groupIdx > 0 && <div className="section-divider" />}
 
-                            {/* Group Fields */}
-                            {isExpanded && (
-                                <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
-                                    {indicators.map((ind) => (
-                                        <IndicatorField
-                                            key={ind.kd_sub_sub}
-                                            config={ind}
-                                            value={form[`ind_${ind.kd_sub_sub}`] || ''}
-                                            onChange={(val) => handleChange(`ind_${ind.kd_sub_sub}`, val)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                            <div className="glass-card overflow-hidden">
+                                {/* Group Header */}
+                                <button
+                                    onClick={() => setExpandedGroup(isExpanded ? null : groupName)}
+                                    className="w-full p-4 flex items-center justify-between"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center ${groupFilled === indicators.length
+                                                    ? 'bg-emerald-500/20'
+                                                    : 'bg-teal-500/10'
+                                                }`}
+                                        >
+                                            {groupFilled === indicators.length ? (
+                                                <CheckCircle2 size={16} className="text-emerald-400" />
+                                            ) : indicators[0].type === 'pilihan' ? (
+                                                <ListChecks size={16} className="text-teal-400" />
+                                            ) : (
+                                                <Hash size={16} className="text-teal-400" />
+                                            )}
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-sm font-medium">{groupName}</p>
+                                            <p className="text-[10px] text-[--color-text-dim]">
+                                                {groupFilled}/{indicators.length} terisi
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {isExpanded ? (
+                                        <ChevronUp size={18} className="text-[--color-text-dim]" />
+                                    ) : (
+                                        <ChevronDown size={18} className="text-[--color-text-dim]" />
+                                    )}
+                                </button>
+
+                                {/* Group Fields */}
+                                {isExpanded && (
+                                    <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
+                                        {indicators.map((ind) => (
+                                            <IndicatorField
+                                                key={ind.kd_sub_sub}
+                                                config={ind}
+                                                value={form[`ind_${ind.kd_sub_sub}`] || ''}
+                                                onChange={(val) => handleChange(`ind_${ind.kd_sub_sub}`, val)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
+
+                {/* Catatan / Notes */}
+                <div className="glass-card p-4 space-y-3">
+                    <div className="section-title">
+                        <MessageSquare size={14} />
+                        Catatan
+                    </div>
+                    <textarea
+                        className="textarea-field"
+                        placeholder="Tambahkan catatan untuk aset ini..."
+                        value={form.catatan || ''}
+                        onChange={(e) => handleChange('catatan', e.target.value)}
+                        rows={3}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -260,8 +289,8 @@ function IndicatorField({ config, value, onChange }) {
 
     return (
         <div>
-            <label className="text-xs font-medium text-[--color-text-dim] mb-1 block">
-                <span className="text-[10px] font-mono text-blue-400/60 mr-1">{kd_sub_sub}</span>
+            <label className="text-xs font-medium text-[--color-text-dim] mb-1.5 block">
+                <span className="text-[10px] font-mono text-teal-400/50 mr-1">{kd_sub_sub}</span>
                 {label}
             </label>
 
@@ -271,13 +300,10 @@ function IndicatorField({ config, value, onChange }) {
                         <button
                             key={opt.nilai}
                             onClick={() => onChange(opt.nilai)}
-                            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between ${value === opt.nilai
-                                    ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30'
-                                    : 'bg-[--color-bg] text-[--color-text-dim] hover:bg-[--color-surface-2]'
-                                }`}
+                            className={`option-btn ${value === opt.nilai ? 'selected' : ''}`}
                         >
                             <span>{opt.nilai}</span>
-                            <span className="text-[10px] opacity-60">skor: {opt.skor}</span>
+                            <span className="text-[10px] opacity-50">skor: {opt.skor}</span>
                         </button>
                     ))}
                 </div>

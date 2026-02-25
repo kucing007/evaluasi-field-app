@@ -92,8 +92,8 @@ export default function ExportPage() {
                 {/* Summary Card */}
                 <div className="glass-card p-5">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/10 flex items-center justify-center">
-                            <FileSpreadsheet size={24} className="text-blue-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500/20 to-teal-600/10 flex items-center justify-center">
+                            <FileSpreadsheet size={24} className="text-teal-400" />
                         </div>
                         <div>
                             <h2 className="font-semibold">{paket.no_paket}</h2>
@@ -103,7 +103,7 @@ export default function ExportPage() {
 
                     <div className="grid grid-cols-3 gap-3">
                         <div className="bg-[--color-bg] rounded-xl p-3 text-center">
-                            <div className="text-lg font-bold text-blue-400">{total}</div>
+                            <div className="text-lg font-bold text-teal-400">{total}</div>
                             <div className="text-[10px] text-[--color-text-dim]">Total Aset</div>
                         </div>
                         <div className="bg-[--color-bg] rounded-xl p-3 text-center">

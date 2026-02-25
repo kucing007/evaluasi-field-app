@@ -2,16 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, importAsetList, deletePaket } from '../db';
-import { parseImportJSON, parseImportCSV, parseImportExcel } from '../utils/excelExport';
+import { parseImportJSON, parseImportCSV, parseImportExcel, generateImportTemplate } from '../utils/excelExport';
 import {
     FolderOpen,
     Upload,
-    Plus,
     Trash2,
     ChevronRight,
     ClipboardList,
     FileSpreadsheet,
-    Smartphone,
+    Download,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -67,6 +66,8 @@ export default function HomePage() {
             return;
         }
 
+        // Reset file input so same file can be re-imported
+        e.target.value = '';
         setImportData(rows);
         setShowImport(true);
     }
@@ -102,7 +103,7 @@ export default function HomePage() {
             {/* Header */}
             <div className="page-header">
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
                         <ClipboardList size={20} color="white" />
                     </div>
                     <div>
@@ -119,24 +120,22 @@ export default function HomePage() {
                         onClick={() => fileRef.current?.click()}
                         className="glass-card p-4 flex flex-col items-center gap-2 text-center"
                     >
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center">
-                            <Upload size={22} className="text-emerald-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500/20 to-teal-600/10 flex items-center justify-center">
+                            <Upload size={22} className="text-teal-400" />
                         </div>
                         <span className="text-sm font-medium">Import Aset</span>
                         <span className="text-[10px] text-[--color-text-dim]">JSON, CSV, XLSX</span>
                     </button>
-                    <a
-                        href="https://github.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        onClick={() => generateImportTemplate()}
                         className="glass-card p-4 flex flex-col items-center gap-2 text-center"
                     >
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 flex items-center justify-center">
-                            <Smartphone size={22} className="text-violet-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 to-sky-600/10 flex items-center justify-center">
+                            <Download size={22} className="text-sky-400" />
                         </div>
-                        <span className="text-sm font-medium">Panduan</span>
-                        <span className="text-[10px] text-[--color-text-dim]">Cara penggunaan</span>
-                    </a>
+                        <span className="text-sm font-medium">Template</span>
+                        <span className="text-[10px] text-[--color-text-dim]">Download .xlsx</span>
+                    </button>
                 </div>
 
                 <input
@@ -190,7 +189,7 @@ export default function HomePage() {
                                         <div className="flex-1">
                                             <div className="progress-bar">
                                                 <div
-                                                    className="progress-bar-fill bg-gradient-to-r from-blue-500 to-emerald-500"
+                                                    className="progress-bar-fill bg-gradient-to-r from-teal-500 to-emerald-500"
                                                     style={{ width: `${progress}%` }}
                                                 />
                                             </div>
@@ -212,7 +211,7 @@ export default function HomePage() {
                     <div className="bg-[--color-surface] w-full max-w-md rounded-2xl overflow-hidden max-h-[85vh] flex flex-col">
                         <div className="p-5 border-b border-white/5">
                             <h2 className="text-lg font-bold flex items-center gap-2">
-                                <FileSpreadsheet size={20} className="text-blue-400" />
+                                <FileSpreadsheet size={20} className="text-teal-400" />
                                 Import Daftar Aset
                             </h2>
                             <p className="text-xs text-[--color-text-dim] mt-1">
@@ -252,13 +251,21 @@ export default function HomePage() {
                             {/* Preview */}
                             <div>
                                 <p className="text-xs font-medium text-[--color-text-dim] mb-2">Preview (5 pertama):</p>
-                                <div className="space-y-1">
+                                <div className="space-y-1.5">
                                     {importData.slice(0, 5).map((row, i) => (
-                                        <div key={i} className="bg-[--color-bg] rounded-lg px-3 py-2 text-xs flex items-center gap-2">
-                                            <span className="text-[--color-text-dim] w-5">{i + 1}.</span>
-                                            <span className="font-mono">{row.kd_brg}</span>
-                                            <span className="text-blue-400">NUP {row.no_aset}</span>
-                                            <span className="text-[--color-text-dim] truncate flex-1">{row.ur_sskel}</span>
+                                        <div key={i} className="bg-[--color-bg] rounded-lg px-3 py-2 text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[--color-text-dim] w-5">{i + 1}.</span>
+                                                <span className="font-mono">{row.kd_brg}</span>
+                                                <span className="text-teal-400">NUP {row.no_aset}</span>
+                                                <span className="text-[--color-text-dim] truncate flex-1">{row.ur_sskel}</span>
+                                            </div>
+                                            {(row.luas || row.kondisi_barang) && (
+                                                <div className="flex gap-2 ml-7 mt-1">
+                                                    {row.luas && <span className="info-chip">Luas: {row.luas}</span>}
+                                                    {row.kondisi_barang && <span className="info-chip">{row.kondisi_barang}</span>}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                     {importData.length > 5 && (
