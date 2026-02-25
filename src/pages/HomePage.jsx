@@ -129,8 +129,8 @@ export default function HomePage() {
                         <ClipboardList size={20} color="white" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold">Evaluasi BMN</h1>
-                        <p className="text-xs text-[--color-text-dim]">Field Data Collection</p>
+                        <h1 className="text-lg font-bold">Evaluasi Kinerja BMN</h1>
+                        <p className="text-xs text-[--color-text-dim]">Form input Peninjauan Lapangan EVAKIN</p>
                     </div>
                 </div>
             </div>
@@ -146,7 +146,7 @@ export default function HomePage() {
                             <Upload size={22} className="text-teal-400" />
                         </div>
                         <span className="text-sm font-medium">Import File</span>
-                        <span className="text-[10px] text-[--color-text-dim]">JSON, CSV, XLSX</span>
+                        <span className="text-[10px] text-[--color-text-dim]">XLSX / JSON</span>
                     </button>
                     <button
                         onClick={() => { setShowPaste(true); setPasteText(''); }}
@@ -156,7 +156,7 @@ export default function HomePage() {
                             <ClipboardPaste size={22} className="text-cyan-400" />
                         </div>
                         <span className="text-sm font-medium">Paste Text</span>
-                        <span className="text-[10px] text-[--color-text-dim]">CSV / JSON</span>
+                        <span className="text-[10px] text-[--color-text-dim]">Copy from Excel / JSON</span>
                     </button>
                     <button
                         onClick={() => generateImportTemplate()}

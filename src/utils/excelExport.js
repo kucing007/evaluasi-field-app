@@ -112,17 +112,21 @@ export function parseImportJSON(jsonString) {
 }
 
 /**
- * Parse imported CSV.
+ * Parse imported CSV (auto-detects tab or comma delimiter).
  * Returns { rows, meta }.
  */
 export function parseImportCSV(csvString) {
     const lines = csvString.trim().split('\n');
     if (lines.length < 2) return { rows: [], meta: { no_paket: '', ur_satker: '' } };
 
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+    // Auto-detect delimiter: tab or comma
+    const firstLine = lines[0];
+    const delimiter = firstLine.includes('\t') ? '\t' : ',';
 
-    const rawRows = lines.slice(1).map((line) => {
-        const vals = line.split(',').map((v) => v.trim().replace(/"/g, ''));
+    const headers = firstLine.split(delimiter).map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+
+    const rawRows = lines.slice(1).filter((l) => l.trim()).map((line) => {
+        const vals = line.split(delimiter).map((v) => v.trim().replace(/"/g, ''));
         const row = {};
         headers.forEach((h, i) => {
             row[h] = vals[i] || '';
