@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, importAsetList, deletePaket } from '../db';
-import { parseImportJSON, parseImportCSV, parseImportExcel, generateImportTemplate } from '../utils/excelExport';
+import {
+    parseImportJSON,
+    parseImportCSV,
+    parseImportExcel,
+    parseImportText,
+    generateImportTemplate,
+} from '../utils/excelExport';
 import {
     FolderOpen,
     Upload,
@@ -11,6 +17,7 @@ import {
     ClipboardList,
     FileSpreadsheet,
     Download,
+    ClipboardPaste,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -22,6 +29,8 @@ export default function HomePage() {
     const [satker, setSatker] = useState('');
     const [tahun, setTahun] = useState(new Date().getFullYear());
     const [importing, setImporting] = useState(false);
+    const [showPaste, setShowPaste] = useState(false);
+    const [pasteText, setPasteText] = useState('');
 
     const pakets = useLiveQuery(() => db.pakets.reverse().toArray());
 
@@ -41,35 +50,47 @@ export default function HomePage() {
         })();
     }, [pakets]);
 
+    function applyParsed({ rows, meta }) {
+        if (rows.length === 0) {
+            alert('Tidak ada data ditemukan');
+            return;
+        }
+        setImportData(rows);
+        // Auto-fill from metadata
+        if (meta.no_paket) setPaketName(meta.no_paket);
+        if (meta.ur_satker) setSatker(meta.ur_satker);
+        setShowImport(true);
+        setShowPaste(false);
+    }
+
     async function handleFile(e) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        let rows = [];
+        let result;
 
         if (file.name.endsWith('.json')) {
             const text = await file.text();
-            rows = parseImportJSON(text);
+            result = parseImportJSON(text);
         } else if (file.name.endsWith('.csv')) {
             const text = await file.text();
-            rows = parseImportCSV(text);
+            result = parseImportCSV(text);
         } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
             const buf = await file.arrayBuffer();
-            rows = parseImportExcel(buf);
+            result = parseImportExcel(buf);
         } else {
             alert('Format file tidak didukung. Gunakan .json, .csv, atau .xlsx');
             return;
         }
 
-        if (rows.length === 0) {
-            alert('Tidak ada data ditemukan di file');
-            return;
-        }
-
-        // Reset file input so same file can be re-imported
         e.target.value = '';
-        setImportData(rows);
-        setShowImport(true);
+        applyParsed(result);
+    }
+
+    function handlePasteImport() {
+        if (!pasteText.trim()) return;
+        const result = parseImportText(pasteText);
+        applyParsed(result);
     }
 
     async function handleImport() {
@@ -85,6 +106,7 @@ export default function HomePage() {
             setImportData([]);
             setPaketName('');
             setSatker('');
+            setPasteText('');
             navigate(`/paket/${paketId}`);
         } catch (err) {
             alert('Error import: ' + err.message);
@@ -115,7 +137,7 @@ export default function HomePage() {
 
             <div className="px-5">
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3 mb-8">
+                <div className="grid grid-cols-3 gap-3 mb-8">
                     <button
                         onClick={() => fileRef.current?.click()}
                         className="glass-card p-4 flex flex-col items-center gap-2 text-center"
@@ -123,8 +145,18 @@ export default function HomePage() {
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500/20 to-teal-600/10 flex items-center justify-center">
                             <Upload size={22} className="text-teal-400" />
                         </div>
-                        <span className="text-sm font-medium">Import Aset</span>
+                        <span className="text-sm font-medium">Import File</span>
                         <span className="text-[10px] text-[--color-text-dim]">JSON, CSV, XLSX</span>
+                    </button>
+                    <button
+                        onClick={() => { setShowPaste(true); setPasteText(''); }}
+                        className="glass-card p-4 flex flex-col items-center gap-2 text-center"
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 flex items-center justify-center">
+                            <ClipboardPaste size={22} className="text-cyan-400" />
+                        </div>
+                        <span className="text-sm font-medium">Paste Text</span>
+                        <span className="text-[10px] text-[--color-text-dim]">CSV / JSON</span>
                     </button>
                     <button
                         onClick={() => generateImportTemplate()}
@@ -205,6 +237,50 @@ export default function HomePage() {
                 )}
             </div>
 
+            {/* Paste Modal */}
+            {showPaste && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+                    <div className="bg-[--color-surface] w-full max-w-md rounded-2xl overflow-hidden max-h-[85vh] flex flex-col">
+                        <div className="p-5 border-b border-white/5">
+                            <h2 className="text-lg font-bold flex items-center gap-2">
+                                <ClipboardPaste size={20} className="text-cyan-400" />
+                                Import dari Text
+                            </h2>
+                            <p className="text-xs text-[--color-text-dim] mt-1">
+                                Paste data CSV atau JSON dari laptop
+                            </p>
+                        </div>
+
+                        <div className="p-5 flex-1 overflow-y-auto space-y-3">
+                            <textarea
+                                className="textarea-field"
+                                placeholder={"Paste CSV:\nno_paket,ur_satker,kd_brg,no_aset,ur_sskel,luas,kondisi_barang\n2024/KPKNL-001,KPKNL Jakarta,3050201001,1,Gedung Kantor,500,Baik\n\nAtau paste JSON array..."}
+                                rows={8}
+                                value={pasteText}
+                                onChange={(e) => setPasteText(e.target.value)}
+                                autoFocus
+                            />
+                            <p className="text-[10px] text-[--color-text-dim]">
+                                Otomatis deteksi CSV atau JSON. Kolom no_paket & ur_satker akan diisi otomatis.
+                            </p>
+                        </div>
+
+                        <div className="p-5 border-t border-white/5 flex gap-3">
+                            <button className="btn-secondary flex-1" onClick={() => setShowPaste(false)}>
+                                Batal
+                            </button>
+                            <button
+                                className="btn-primary flex-1"
+                                onClick={handlePasteImport}
+                                disabled={!pasteText.trim()}
+                            >
+                                Parse Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Import Modal */}
             {showImport && (
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
@@ -221,7 +297,7 @@ export default function HomePage() {
 
                         <div className="p-5 flex-1 overflow-y-auto space-y-4">
                             <div>
-                                <label className="text-xs font-medium text-[--color-text-dim] mb-1 block">Nama Paket *</label>
+                                <label className="text-xs font-medium text-[--color-text-dim] mb-1 block">Nomor Paket *</label>
                                 <input
                                     className="input-field"
                                     placeholder="contoh: 2024/KPKNL-001"
@@ -230,7 +306,7 @@ export default function HomePage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-medium text-[--color-text-dim] mb-1 block">Satker</label>
+                                <label className="text-xs font-medium text-[--color-text-dim] mb-1 block">Satuan Kerja</label>
                                 <input
                                     className="input-field"
                                     placeholder="Nama satuan kerja"
@@ -278,7 +354,7 @@ export default function HomePage() {
                         </div>
 
                         <div className="p-5 border-t border-white/5 flex gap-3">
-                            <button className="btn-secondary flex-1" onClick={() => setShowImport(false)}>
+                            <button className="btn-secondary flex-1" onClick={() => { setShowImport(false); setImportData([]); setPaketName(''); setSatker(''); }}>
                                 Batal
                             </button>
                             <button
