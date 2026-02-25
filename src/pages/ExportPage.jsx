@@ -58,6 +58,7 @@ export default function ExportPage() {
                     row[`ind_${ind.kd_sub_sub}`] = ev[`ind_${ind.kd_sub_sub}`] || '';
                 }
 
+                row.catatan = ev.catatan || '';
                 return row;
             });
 

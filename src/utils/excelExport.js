@@ -12,6 +12,7 @@ export function exportToExcel(rows, filename = 'evaluasi_data.xlsx') {
         'cara_evaluasi',
         'tgl_survey',
         ...INDIKATOR_CONFIG.map((i) => i.kd_sub_sub),
+        'catatan',
     ];
 
     const wsData = [headers];
@@ -28,6 +29,7 @@ export function exportToExcel(rows, filename = 'evaluasi_data.xlsx') {
                 if (ind.type === 'angka') return Number(val) || 0;
                 return val;
             }),
+            row.catatan || '',
         ];
         wsData.push(line);
     }
